@@ -15,6 +15,8 @@ func main() {
 	// Define command-line flags
 	paramToReplace := flag.String("param", "", "Parameter to replace")
 	replacementValue := flag.String("value", "", "Replacement value")
+	addParam := flag.Bool("add", false, "Add the parameter if it doesn't exist")
+	appendValue := flag.Bool("append", false, "Append the value to the parameter if it exists")
 	verboseErrors := flag.Bool("verbose", false, "Verbose error messages")
 	flag.Parse()
 
@@ -63,7 +65,9 @@ func main() {
 
 		// Iterate through the parameter names and check if the flag value (case-insensitive) is a substring of the parameter name
 		var matchingParamName string
-		for paramName := range queryParameters {
+		var originalParamValue []string
+		for paramName, paramValue := range queryParameters {
+			originalParamValue = paramValue
 			if strings.Contains(strings.ToLower(paramName), paramToReplaceLower) {
 				matchingParamName = paramName
 				break
@@ -72,11 +76,22 @@ func main() {
 
 		// If a matching parameter is found, replace it with the new value
 		if matchingParamName != "" {
-			queryParameters.Set(matchingParamName, *replacementValue)
+			if *appendValue {
+				for _, value := range originalParamValue {
+					queryParameters.Set(matchingParamName, fmt.Sprintf("%s%s", value, *replacementValue))
+				}
+			} else {
+				queryParameters.Set(matchingParamName, *replacementValue)
+			}
 			parsedURL.RawQuery = queryParameters.Encode()
 			fmt.Println(parsedURL.String())
 		} else {
-			if *verboseErrors {
+			// Add the parameter if it doesn't exist
+			if *addParam {
+				queryParameters.Set(*paramToReplace, *replacementValue)
+				parsedURL.RawQuery = queryParameters.Encode()
+				fmt.Println(parsedURL.String())
+			} else if *verboseErrors {
 				fmt.Println("No matching parameter found.")
 			}
 		}
