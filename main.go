@@ -15,6 +15,7 @@ func main() {
 	// Define command-line flags
 	paramToReplace := flag.String("param", "", "Parameter to replace")
 	replacementValue := flag.String("value", "", "Replacement value")
+	verboseErrors := flag.Bool("verbose", false, "Verbose error messages")
 	flag.Parse()
 
 	// Check if the required flags are provided
@@ -44,13 +45,17 @@ func main() {
 		// Parse the input URL
 		parsedURL, err := url.Parse(inputURL)
 		if err != nil {
-			fmt.Println("Error parsing input URL:", err)
+			if *verboseErrors {
+				fmt.Println("Error parsing input URL:", err)
+			}
 		}
 
 		// Get the query parameters
 		queryParameters, err := url.ParseQuery(parsedURL.RawQuery)
 		if err != nil {
-			fmt.Println("Error parsing query parameters:", err)
+			if *verboseErrors {
+				fmt.Println("Error parsing query parameters:", err)
+			}
 		}
 
 		// Convert the flag value to lowercase for case-insensitive matching
@@ -71,7 +76,9 @@ func main() {
 			parsedURL.RawQuery = queryParameters.Encode()
 			fmt.Println(parsedURL.String())
 		} else {
-			// fmt.Println("No matching parameter found.")
+			if *verboseErrors {
+				fmt.Println("No matching parameter found.")
+			}
 		}
 	}
 
